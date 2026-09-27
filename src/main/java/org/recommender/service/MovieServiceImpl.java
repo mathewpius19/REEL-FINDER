@@ -59,7 +59,7 @@ public class MovieServiceImpl implements MovieService{
     }
 
     @Override
-    public List<MovieResponse> recommendMoviesByQuery(String query){
+    public MovieIdsResponse recommendMoviesByQuery(String query){
 
         SearchRequest searchQuery = new SearchRequest(query.replaceAll("\n", ""));
         ObjectMapper mapper = new ObjectMapper();
@@ -72,18 +72,76 @@ public class MovieServiceImpl implements MovieService{
                 .retrieve()
                 .bodyToMono(MovieIdsResponse.class)
                 .block();
-        System.out.println(response.getMovieIds());
-
-        if (!response.getMovieIds().isEmpty()) {
-            System.out.println(response.toString());
-            return response.getMovieIds().stream()
-                    .map(movieId -> movieRepository.findByMovieId(movieId).
-                            orElse(null)).filter(Objects::nonNull).
-                    map(movie -> new MovieResponse(movie.getMovieId(), movie.getTitle(), movie.getGenres(), movie.getPosterUrl()))
-                    .toList();
+        if (response == null) {
+            response = new MovieIdsResponse();
+            response.setType("assistant");
+            response.setResponse("I could not produce a response. Please try again.");
+            response.setMovieIds(List.of());
+            response.setMovies(List.of());
+            return response;
         }
-        System.out.println("No movies Found...");
-        return null;
+
+        String responseType = "movie_recommendation".equals(response.getType())
+                ? "movie_recommendation"
+                : "assistant";
+        String responseText = response.getResponse() != null
+                ? response.getResponse()
+                : response.getContent();
+        response.setType(responseType);
+        response.setResponse(responseText == null ? "" : responseText);
+
+        if (!"movie_recommendation".equals(responseType)) {
+            response.setMovieIds(List.of());
+            response.setMovies(List.of());
+            return response;
+        }
+
+        List<Long> movieIds = response.getMovieIds() == null ? List.of() : response.getMovieIds();
+        System.out.println("response from agent " + response + " movieIds " + movieIds);
+
+        if (!movieIds.isEmpty()) {
+
+            System.out.println("Agent response: " + response);
+            System.out.println("Movie IDs: " + movieIds);
+
+            List<MovieResponse> movies = movieIds.stream()
+                    .map(movieId -> {
+                        System.out.println("Looking up movieId: " + movieId);
+
+                        var movieOpt = movieRepository.findByMovieId(movieId);
+
+                        System.out.println(
+                                "Found " + movieId + ": " + movieOpt.isPresent()
+                        );
+
+                        return movieOpt.orElse(null);
+                    })
+                    .filter(Objects::nonNull)
+                    .map(movie -> {
+                        System.out.println(
+                                "Mapping movie: " +
+                                        movie.getMovieId() + " " +
+                                        movie.getTitle()
+                        );
+
+                        return new MovieResponse(
+                                movie.getMovieId(),
+                                movie.getTitle(),
+                                movie.getGenres(),
+                                movie.getPosterUrl()
+                        );
+                    })
+                    .toList();
+
+            System.out.println("Final movie responses: " + movies);
+
+            response.setMovies(movies);
+            return response;
+        }
+
+        System.out.println("No movies found...");
+        response.setMovies(List.of());
+        return response;
     }
 
     public List<MovieResponse> recommendMoviesByUserId(Long userId){
@@ -177,4 +235,3 @@ public class MovieServiceImpl implements MovieService{
     private record ScoredMovie(Movies movie, int score) {}
 
 }
-

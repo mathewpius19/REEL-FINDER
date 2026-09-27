@@ -41,3 +41,13 @@ export type SignupPayload = AuthPayload & {
   userName: string;
   genrePref: string;
 };
+
+export type SearchResult = {
+  type: "assistant" | "movie_recommendation";
+  response: string;
+  movies: Movie[];
+};
+
+export type StoredSearchResult = SearchResult & {
+  query: string;
+};

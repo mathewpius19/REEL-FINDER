@@ -1,6 +1,7 @@
 package org.recommender.rest;
 
 import org.recommender.dto.request.SearchRequest;
+import org.recommender.dto.response.MovieIdsResponse;
 import org.recommender.dto.response.MovieResponse;
 import org.recommender.entity.Interactions;
 import org.recommender.entity.Movies;
@@ -10,6 +11,8 @@ import org.recommender.service.InteractionsService;
 import org.recommender.service.MovieService;
 import org.recommender.service.UserService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import java.util.Map;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,14 +46,24 @@ public class Routes {
     }
 
     @PostMapping("/signup")
-    public User registerUser(@RequestBody User user) throws Exception {
+    public ResponseEntity<?> registerUser(@RequestBody User user) {
         try{
             System.out.print("Saving User....");
-            return userService.signup(user.getEmail(), user.getPassword(), user.getUserName(), user.getGenrePref());
+            User saved = userService.signup(user.getEmail(), user.getPassword(), user.getUserName(), user.getGenrePref());
+            return ResponseEntity.ok(saved);
+        }
+        catch(RuntimeException e){
+            System.out.print("User signup validation failed: " + e.getMessage());
+            // return a 409 Conflict for duplicate email, otherwise 400
+            String msg = e.getMessage() != null ? e.getMessage() : "Signup failed";
+            if (msg.toLowerCase().contains("exists") || msg.toLowerCase().contains("already")) {
+                return ResponseEntity.status(409).body(Map.of("message", msg));
+            }
+            return ResponseEntity.badRequest().body(Map.of("message", msg));
         }
         catch(Exception e){
             System.out.print("Error while saving User....");
-            throw new Exception(e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("message", e.getMessage()));
         }
     }
 
@@ -111,14 +124,17 @@ public class Routes {
     }
 
     @PostMapping("/movies/search")
-    public List<MovieResponse> getMoviesByQuery(@RequestBody SearchRequest searchQuery) {
+    public MovieIdsResponse getMoviesByQuery(@RequestBody SearchRequest searchQuery) {
         String query = searchQuery.getQuery();
-        if (query != null && !query.isEmpty()) {
-            List<MovieResponse> movies = movieService.recommendMoviesByQuery(query);
-            System.out.println(movies.toString());
-            return movies;
+        if (query != null && !query.trim().isEmpty()) {
+            return movieService.recommendMoviesByQuery(query);
         }
-        return null;
+        MovieIdsResponse response = new MovieIdsResponse();
+        response.setType("assistant");
+        response.setResponse("Please enter a question or describe what you want to watch.");
+        response.setMovieIds(List.of());
+        response.setMovies(List.of());
+        return response;
     }
 
     @GetMapping("/movies/userRecommendations")

@@ -2,34 +2,33 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { startTransition, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { InteractionPanel } from "@/components/InteractionPanel";
-import { MovieGrid } from "@/components/MovieGrid";
+import { RecommendationRail } from "@/components/RecommendationRail";
 import { SearchBar } from "@/components/SearchBar";
-import {
-  getInteractions,
-  getMovies,
-  getRecommendations,
-  saveInteraction,
-  searchMovies
-} from "@/lib/api";
+import { getInteractions, getRecommendations, saveInteraction, searchMovies } from "@/lib/api";
+import { saveSearchResult } from "@/lib/search-session";
 import { clearUserSession, getUserSession } from "@/lib/session";
-import { Interaction, InteractionInput, Movie, User } from "@/lib/types";
+import { Interaction, InteractionInput, Movie, SearchResult, User } from "@/lib/types";
+
+const examplePrompts = [
+  "Movies like Interstellar",
+  "Something emotional but not too long",
+  "What is 27 × 14?"
+];
 
 export default function FeedPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [library, setLibrary] = useState<Movie[]>([]);
+  const [assistantAnswer, setAssistantAnswer] = useState<SearchResult | null>(null);
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
-  const [queryResults, setQueryResults] = useState<Movie[]>([]);
   const [interactions, setInteractions] = useState<Record<number, Interaction>>({});
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchError, setSearchError] = useState("");
-  const [feedError, setFeedError] = useState("");
+  const [error, setError] = useState("");
+  const [recommendationError, setRecommendationError] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [isLoadingFeed, setIsLoadingFeed] = useState(true);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
   const [isSavingInteraction, setIsSavingInteraction] = useState(false);
 
   useEffect(() => {
@@ -41,60 +40,54 @@ export default function FeedPage() {
     }
 
     setUser(storedUser);
-  }, [router]);
 
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-
-    const activeUser = user;
-
-    async function loadFeed() {
-      setIsLoadingFeed(true);
-      setFeedError("");
-
-      try {
-        const [recommendationData, libraryData, interactionData] = await Promise.all([
-          getRecommendations(activeUser.id),
-          getMovies(),
-          getInteractions(activeUser.id)
-        ]);
-
-        setRecommendations(recommendationData);
-        setLibrary(libraryData);
+    void Promise.all([getRecommendations(storedUser.id), getInteractions(storedUser.id)])
+      .then(([recommendedMovies, interactionHistory]) => {
+        setRecommendations(recommendedMovies);
         setInteractions(
-          interactionData.reduce<Record<number, Interaction>>((accumulator, interaction) => {
-            accumulator[interaction.movieId] = interaction;
-            return accumulator;
+          interactionHistory.reduce<Record<number, Interaction>>((entries, interaction) => {
+            entries[interaction.movieId] = interaction;
+            return entries;
           }, {})
         );
-      } catch (loadError) {
-        setFeedError(loadError instanceof Error ? loadError.message : "Unable to load your feed.");
-      } finally {
-        setIsLoadingFeed(false);
-      }
-    }
-
-    void loadFeed();
-  }, [user]);
+      })
+      .catch(() => {
+        setRecommendationError("Your personalized suggestions are temporarily unavailable.");
+      })
+      .finally(() => {
+        setIsLoadingRecommendations(false);
+      });
+  }, [router]);
 
   async function handleSearch(query: string) {
     setIsSearching(true);
-    setSearchError("");
-    setSearchQuery(query);
+    setError("");
+    setAssistantAnswer(null);
 
     try {
-      const data = await searchMovies(query);
-      startTransition(() => {
-        setQueryResults(data);
-      });
-    } catch (loadError) {
-      setSearchError(loadError instanceof Error ? loadError.message : "Unable to search movies.");
-      setQueryResults([]);
+      const result = await searchMovies(query);
+
+      if (result.type === "movie_recommendation") {
+        saveSearchResult({ ...result, query });
+        router.push("/search/results");
+        return;
+      }
+
+      setAssistantAnswer(result);
+    } catch (searchError) {
+      setError(
+        searchError instanceof Error
+          ? searchError.message
+          : "Something went wrong while searching. Please try again."
+      );
     } finally {
       setIsSearching(false);
     }
+  }
+
+  function handleSignOut() {
+    clearUserSession();
+    router.push("/signin");
   }
 
   async function persistInteraction(movie: Movie, updates: Partial<InteractionInput>) {
@@ -120,8 +113,8 @@ export default function FeedPage() {
         ...currentInteractions,
         [saved.movieId]: saved
       }));
-    } catch (saveError) {
-      setFeedError(saveError instanceof Error ? saveError.message : "Unable to save interaction.");
+    } catch {
+      setRecommendationError("Unable to save that interaction right now.");
     } finally {
       setIsSavingInteraction(false);
     }
@@ -130,15 +123,7 @@ export default function FeedPage() {
   async function handleMovieOpen(movie: Movie) {
     setSelectedMovie(movie);
     const current = interactions[movie.movieId];
-
-    await persistInteraction(movie, {
-      clicks: (current?.clicks ?? 0) + 1
-    });
-  }
-
-  function handleSignOut() {
-    clearUserSession();
-    router.push("/signin");
+    await persistInteraction(movie, { clicks: (current?.clicks ?? 0) + 1 });
   }
 
   if (!user) {
@@ -146,111 +131,98 @@ export default function FeedPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.16),_transparent_20%),radial-gradient(circle_at_right,_rgba(249,115,22,0.12),_transparent_24%),linear-gradient(180deg,_#020617,_#0f172a_46%,_#111827)] text-white">
-      <section className="mx-auto flex max-w-7xl flex-col gap-10 px-4 py-8 sm:px-6 lg:px-8">
-        <header className="flex flex-col gap-5 rounded-[2rem] border border-white/10 bg-white/5 p-5 backdrop-blur lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.25em] text-cyan-100">
-              <span className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1">
-                Personal feed
-              </span>
-              <span className="text-slate-400">Signed in as {user.userName}</span>
-            </div>
-            <div>
-              <h1 className="text-3xl font-semibold sm:text-4xl">Welcome back, {user.userName}</h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                Your recommendations use saved genre preferences: {user.genrePref || "No preferences saved"}.
-              </p>
-            </div>
-          </div>
+    <main className="relative min-h-screen overflow-hidden bg-[#050b14] text-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,_rgba(34,211,238,0.12),_transparent_30%),radial-gradient(circle_at_85%_80%,_rgba(249,115,22,0.08),_transparent_26%)]" />
 
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/"
-              className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/10 bg-white/8 px-4 text-sm font-medium text-white transition hover:bg-white/12"
-            >
-              Home
-            </Link>
-            <button
-              type="button"
-              onClick={async () => {
-                if (user) {
-                  setIsLoadingFeed(true);
-                  setFeedError("");
-                  try {
-                    const data = await getRecommendations(user.id);
-                    setRecommendations(data);
-                  } catch (loadError) {
-                    setFeedError(loadError instanceof Error ? loadError.message : "Unable to refresh recommendations.");
-                  } finally {
-                    setIsLoadingFeed(false);
-                  }
-                }
-              }}
-              className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/10 bg-slate-950/60 px-4 text-sm font-medium text-slate-200 transition hover:bg-slate-950"
-            >
-              Refresh recommendations
-            </button>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-cyan-300 px-4 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
-            >
-              Sign out
-            </button>
-          </div>
-        </header>
+      <header className="relative z-10 flex items-center justify-between px-5 py-5 sm:px-8">
+        <Link href="/" className="text-sm font-semibold tracking-[0.18em] text-slate-200 uppercase">
+          Movie Recommender
+        </Link>
+        <div className="flex items-center gap-3">
+          <span className="hidden text-sm text-slate-500 sm:inline">{user.userName}</span>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+          >
+            Sign out
+          </button>
+        </div>
+      </header>
 
-        <SearchBar isLoading={isSearching} onSearch={handleSearch} />
-
-        {feedError ? <p className="text-sm text-amber-300">{feedError}</p> : null}
-
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-xl font-semibold">Recommendations for you</h2>
-            <p className="text-sm text-slate-400">
-              Generated using your saved preferences and recorded interactions.
+      <section className="relative z-10 mx-auto min-h-[calc(100vh-84px)] w-full max-w-7xl px-4 pt-[9vh] pb-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <div className="mb-8 text-center">
+            <p className="mb-3 text-xs font-medium tracking-[0.28em] text-cyan-300 uppercase">Ask or discover</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-50 sm:text-5xl">
+              What would you like to explore?
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-400 sm:text-base">
+              Search here for any movie recommendation, or choose from your personalized picks below.
             </p>
           </div>
-          {isLoadingFeed ? (
-            <SkeletonGrid />
-          ) : recommendations.length > 0 ? (
-            <MovieGrid movies={recommendations} interactions={interactions} onSelect={handleMovieOpen} />
-          ) : (
-            <EmptyState message="Recommendations will show up here once the backend returns them." />
-          )}
-        </section>
 
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-xl font-semibold">Semantic search</h2>
-            <p className="text-sm text-slate-400">
-              {searchQuery ? `Showing results for "${searchQuery}".` : "Use natural-language search to discover something new."}
-            </p>
-          </div>
-          {searchError ? <p className="text-sm text-amber-300">{searchError}</p> : null}
+          <SearchBar isLoading={isSearching} onSearch={handleSearch} />
+
+          {!assistantAnswer && !isSearching ? (
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              {examplePrompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => void handleSearch(prompt)}
+                  className="rounded-full border border-white/8 bg-white/[0.035] px-4 py-2 text-xs text-slate-400 transition hover:border-cyan-300/30 hover:text-slate-200"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
           {isSearching ? (
-            <SkeletonGrid />
-          ) : queryResults.length > 0 ? (
-            <MovieGrid movies={queryResults} interactions={interactions} onSelect={handleMovieOpen} />
-          ) : (
-            <EmptyState message="Search results will appear here after you submit a query." />
-          )}
-        </section>
+            <div className="mt-7 flex items-center justify-center gap-3 text-sm text-slate-400" role="status">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
+              Thinking through your request...
+            </div>
+          ) : null}
 
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-xl font-semibold">Browse library</h2>
-            <p className="text-sm text-slate-400">
-              Click any movie to record engagement, rate it, or mark it as watched.
-            </p>
+          {error ? (
+            <div className="mt-7 rounded-2xl border border-amber-300/20 bg-amber-300/8 px-5 py-4 text-sm text-amber-100">
+              {error}
+            </div>
+          ) : null}
+
+          {assistantAnswer ? (
+            <article className="mt-8 rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+              <p className="mb-3 text-xs font-medium tracking-[0.22em] text-cyan-300 uppercase">Response</p>
+              <p className="whitespace-pre-wrap text-base leading-7 text-slate-200">{assistantAnswer.response}</p>
+            </article>
+          ) : null}
+        </div>
+
+        <section className="mt-14">
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <p className="mb-2 text-xs font-medium tracking-[0.24em] text-orange-300 uppercase">Selected for you</p>
+              <h2 className="text-2xl font-semibold tracking-tight">Based on your preferences</h2>
+            </div>
+            {!isLoadingRecommendations && recommendations.length > 0 ? (
+              <span className="hidden text-xs text-slate-500 sm:block">Scroll to explore</span>
+            ) : null}
           </div>
-          {isLoadingFeed ? (
-            <SkeletonGrid />
-          ) : library.length > 0 ? (
-            <MovieGrid movies={library.slice(0, 24)} interactions={interactions} onSelect={handleMovieOpen} />
+
+          {recommendationError ? (
+            <div className="rounded-2xl border border-amber-300/20 bg-amber-300/8 px-5 py-4 text-sm text-amber-100">
+              {recommendationError}
+            </div>
+          ) : isLoadingRecommendations ? (
+            <RecommendationRailSkeleton />
+          ) : recommendations.length > 0 ? (
+            <RecommendationRail movies={recommendations} interactions={interactions} onSelect={handleMovieOpen} />
           ) : (
-            <EmptyState message="No movies are available in the library yet." />
+            <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.025] px-6 py-10 text-center text-sm text-slate-400">
+              No personalized suggestions yet. Update your preferences or interact with a few movies first.
+            </div>
           )}
         </section>
       </section>
@@ -275,23 +247,15 @@ export default function FeedPage() {
   );
 }
 
-function SkeletonGrid() {
+function RecommendationRailSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
+    <div className="flex gap-4 overflow-hidden pb-4">
       {Array.from({ length: 6 }).map((_, index) => (
         <div
           key={index}
-          className="aspect-[2/3] animate-pulse rounded-3xl border border-white/8 bg-white/5"
+          className="aspect-[2/3] w-[178px] shrink-0 animate-pulse rounded-3xl border border-white/8 bg-white/5 sm:w-[205px]"
         />
       ))}
-    </div>
-  );
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="rounded-3xl border border-dashed border-white/10 bg-slate-950/40 px-6 py-12 text-center text-sm text-slate-400">
-      {message}
     </div>
   );
 }

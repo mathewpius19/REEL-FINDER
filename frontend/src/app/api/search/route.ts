@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getBackendBaseUrl } from "@/lib/config";
-import { Movie } from "@/lib/types";
+import { Movie, SearchResult } from "@/lib/types";
 
 function normalizeMovies(payload: unknown): Movie[] {
   if (!Array.isArray(payload)) {
@@ -18,6 +18,25 @@ function normalizeMovies(payload: unknown): Movie[] {
       posterUrl: entry.posterUrl ? String(entry.posterUrl) : null
     };
   });
+}
+
+function normalizeSearchResult(payload: unknown): SearchResult {
+  if (Array.isArray(payload)) {
+    return {
+      type: "movie_recommendation",
+      response: "Here are the movies I found for you.",
+      movies: normalizeMovies(payload)
+    };
+  }
+
+  const entry = payload as Partial<SearchResult> | null;
+  const type = entry?.type === "movie_recommendation" ? "movie_recommendation" : "assistant";
+
+  return {
+    type,
+    response: typeof entry?.response === "string" ? entry.response : "",
+    movies: normalizeMovies(entry?.movies)
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -45,7 +64,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(normalizeMovies(payload));
+    return NextResponse.json(normalizeSearchResult(payload));
   } catch (error) {
     return NextResponse.json(
       {

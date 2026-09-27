@@ -1,5 +1,6 @@
 package org.recommender.service;
 
+import org.recommender.dto.response.MovieIdsResponse;
 import org.recommender.dto.response.MovieResponse;
 import org.recommender.entity.Movies;
 
@@ -13,7 +14,7 @@ public interface MovieService {
 
     List<Movies> findMovieByIds(List<Long> movieIds);
 
-    List<MovieResponse> recommendMoviesByQuery(String query);
+    MovieIdsResponse recommendMoviesByQuery(String query);
 
     List<MovieResponse> recommendMoviesByUserId(Long userId);
 }

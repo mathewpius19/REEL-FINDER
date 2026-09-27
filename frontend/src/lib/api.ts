@@ -1,4 +1,12 @@
-import { AuthPayload, Interaction, InteractionInput, Movie, SignupPayload, User } from "@/lib/types";
+import {
+  AuthPayload,
+  Interaction,
+  InteractionInput,
+  Movie,
+  SearchResult,
+  SignupPayload,
+  User
+} from "@/lib/types";
 
 async function readResponse(response: Response) {
   const text = await response.text();
@@ -23,10 +31,14 @@ export async function searchMovies(query: string) {
     body: JSON.stringify({ query })
   });
 
-  const data = (await readResponse(response)) as Movie[];
+  const data = (await readResponse(response)) as SearchResult;
 
   if (!response.ok) {
-    throw new Error("Unable to search movies right now.");
+    throw new Error("Something went wrong while searching. Please try again.");
+  }
+
+  if (!data || !Array.isArray(data.movies) || typeof data.response !== "string") {
+    throw new Error("The search service returned an unexpected response.");
   }
 
   return data;
@@ -66,13 +78,14 @@ export async function signupUser(payload: SignupPayload) {
     },
     body: JSON.stringify(payload)
   });
-  const data = (await readResponse(response)) as User;
+  const data = (await readResponse(response)) as any;
 
   if (!response.ok) {
-    throw new Error("Unable to create account right now.");
+    const message = data && data.message ? data.message : "Unable to create account right now.";
+    throw new Error(message);
   }
 
-  return data;
+  return data as User;
 }
 
 export async function signinUser(payload: AuthPayload) {

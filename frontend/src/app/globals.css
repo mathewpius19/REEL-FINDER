@@ -22,3 +22,29 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+@keyframes recommendation-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.recommendation-card-enter {
+  animation: recommendation-card-enter 550ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.recommendation-rail {
+  scrollbar-color: rgba(103, 232, 249, 0.35) transparent;
+  scrollbar-width: thin;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recommendation-card-enter {
+    animation: none;
+  }
+}

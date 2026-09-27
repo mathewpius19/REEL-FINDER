@@ -7,10 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -30,6 +27,12 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User signup(String email, String password, String userName, String genrePref) {
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        // If a user with this email exists, stop and inform the caller
+        if (existingUser != null && existingUser.isPresent()) {
+            throw new RuntimeException("email or user already exists");
+        }
+
         User user = new User();
         user.setEmail(email)
                 .setPassword(encoder.encode(password))
