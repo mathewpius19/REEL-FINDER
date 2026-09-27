@@ -1,9 +1,8 @@
-from src.embeddings.embedding_initialization import load_embeddings_model, encode_texts, normalize_embeddings
+from src.embeddings.embedding_initialization import load_embeddings_model
 from src.embeddings.load_embeddings import load_embeddings
 from src.indexing.initialize_indexes import load_index, index_file
 from src.data.load import load_data
-from src.data.dummyUser import load_user_data
-from src.util.util import get_indices_for_user
+
 from src.service.app_context import app_context
 
 #initializing model

@@ -4,6 +4,8 @@ from src.indexing.search import search_query, search_user_query
 from src.util.contentFilter import filter_content_type
 import pandas as pd
 from datetime import datetime
+import asyncio
+from src.agent import call_agent
 
 app = Flask(__name__)
 
@@ -17,11 +19,23 @@ def semanticSearchByQuery():
         print("data from request ", data)
         query = data["query"].strip()
         print("request received:", query)
+        results = asyncio.run(call_agent(query))
+        print("results from agent are ", results)
+        return jsonify(results)
+
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/recommend/searchMovies", methods=["POST"])
+def searchMovies():
+    try:
+        data = request.get_json()
+        print("data from request ", data)
+        query = data["query"].strip()
         contentTypes = filter_content_type(query)
-
         results = search_query(contentTypes, [query])
-
-        print("results are ", results)
+        print("results from searchMovies ", results)
         return jsonify(results)
 
     except Exception as e:

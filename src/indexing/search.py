@@ -10,7 +10,6 @@ user_inteactions = load_user_data()
 def search_query(contentTypes, query):
     model = app_context.model
     movie_ids = app_context.movie_ids
-    movies_by_ids = app_context.movies_by_id
 
     embeddings = encode_texts(model,query)
     normalized_query = normalize_embeddings(embeddings)
@@ -39,27 +38,33 @@ def search_query(contentTypes, query):
             movies.append(int(movie_id))
             
     if "movies" in contentTypes and "Documentary" not in contentTypes:
-        for id in movies[0:10]:
-            
-            results.append(id)
+        results.extend(movies)
 
     elif "Documentary" in contentTypes and "movies" not in contentTypes:
-        for id in documentaries[0:10]:
-            
-            results.append(id)
+        results.extend(documentaries)
     elif "movies" in contentTypes and "Documentary" in contentTypes:
-        for id in movies[0:5]:
-            results.append(id)
-        for id in documentaries[0:5]:
-        
-            results.append(id)
+        results.extend(movies)
+        results.extend(documentaries)
     else:
-        for id in movies[0:10]:
+        results.extend(movies)
 
-            results.append(id)
+    results = results[:5]
 
-            
-    return {"movieIds":results}
+    movie_records = []
+    for movie_id in results:
+        movie = movies_with_set_keys.loc[movie_id]
+        movie_records.append({
+            "movie_id": int(movie_id),
+            "title": str(movie["title"]),
+            "genres": str(movie["genres"]),
+            "tags": str(movie["tags"]),
+            "text": str(movie["text"])
+        })
+
+    return {
+        "movieIds": results,
+        "movies": movie_records,
+    }
 
 def search_user_query(user_df,
                        k=10,

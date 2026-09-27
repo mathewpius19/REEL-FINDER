@@ -4,10 +4,10 @@ from src.embeddings.embedding_initialization import load_embeddings_model,encode
 import numpy as np
 import faiss
 
-movieIds,embeddings = load_embeddings()
 index_file = INDEXING_DIR / "movie_indices.faiss"
 
 def build_flat_indexes():
+    _, embeddings = load_embeddings()
     dimension = embeddings.shape[1]
     vectors = embeddings.astype(np.float32)
     index = faiss.IndexFlatIP(dimension)
