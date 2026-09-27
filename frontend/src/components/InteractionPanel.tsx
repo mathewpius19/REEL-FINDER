@@ -24,17 +24,18 @@ export function InteractionPanel({
   }
 
   return (
-    <div className="fixed inset-0 z-20 flex items-end justify-end bg-slate-950/60 p-4 backdrop-blur-sm">
-      <aside className="w-full max-w-md rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 text-white shadow-2xl">
+    <div className="fixed inset-0 z-20 flex items-end justify-end bg-[#020612]/75 p-4 backdrop-blur-sm">
+      <aside className="w-full max-w-md rounded-2xl border border-blue-300/20 bg-[#07132b]/95 p-6 text-white shadow-[0_24px_90px_rgba(0,0,0,0.6)]">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold">{movie.title}</h2>
-            <p className="mt-1 text-sm text-slate-400">{movie.genres || "Genres unavailable"}</p>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-red-400">Your activity</p>
+            <h2 className="text-3xl font-bold">{movie.title}</h2>
+            <p className="mt-1 text-sm text-[#91a0bd]">{movie.genres || "Genres unavailable"}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-white/10 px-3 py-1 text-sm text-slate-300 transition hover:bg-white/8"
+            className="rounded-full border border-blue-300/15 px-3 py-1 text-sm text-[#a9b6cf] transition hover:border-red-400/35 hover:bg-red-500/10 hover:text-white"
           >
             Close
           </button>
@@ -58,8 +59,8 @@ export function InteractionPanel({
                   disabled={isSaving}
                   className={`rounded-2xl border px-4 py-2 text-sm transition ${
                     interaction?.rating === rating
-                      ? "border-cyan-300 bg-cyan-300/12 text-cyan-100"
-                      : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                      ? "border-red-400 bg-red-500/15 text-red-100"
+                      : "border-blue-300/15 bg-blue-500/[0.06] text-[#a9b6cf] hover:bg-blue-500/15"
                   }`}
                 >
                   {rating}
@@ -74,14 +75,14 @@ export function InteractionPanel({
               type="button"
               onClick={() => onToggleWatched(!(interaction?.watched ?? false))}
               disabled={isSaving}
-              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:bg-white/10"
+              className="rounded-xl border border-blue-300/20 bg-blue-500/[0.08] px-4 py-3 text-sm text-[#d9e1f0] transition hover:border-blue-400/45 hover:bg-blue-500/15"
             >
               Mark as {interaction?.watched ? "unwatched" : "watched"}
             </button>
           </div>
 
           {interaction?.lastInteraction ? (
-            <p className="text-sm text-slate-400">Last interaction: {interaction.lastInteraction}</p>
+            <p className="text-sm text-[#8291ae]">Last interaction: {interaction.lastInteraction}</p>
           ) : null}
         </div>
       </aside>
@@ -91,9 +92,9 @@ export function InteractionPanel({
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{label}</p>
-      <p className="mt-2 text-lg font-semibold text-white">{value}</p>
+    <div className="rounded-xl border border-blue-300/10 bg-blue-500/[0.055] p-4">
+      <p className="text-xs uppercase tracking-[0.2em] text-[#647493]">{label}</p>
+      <p className="mt-2 text-lg font-bold text-white">{value}</p>
     </div>
   );
 }

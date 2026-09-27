@@ -38,7 +38,7 @@ export function SearchBar({
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full rounded-[1.75rem] border border-white/12 bg-white/8 p-3 shadow-[0_24px_90px_rgba(2,8,23,0.35)] backdrop-blur"
+      className="w-full rounded-2xl border border-blue-300/25 bg-[#091731]/90 p-3 shadow-[0_26px_90px_rgba(0,20,70,0.42),0_0_0_1px_rgba(47,107,255,0.06)] backdrop-blur-xl transition focus-within:border-blue-400/60 focus-within:shadow-[0_26px_90px_rgba(0,20,70,0.5),0_0_32px_rgba(47,107,255,0.12)]"
     >
       <textarea
         value={query}
@@ -47,14 +47,14 @@ export function SearchBar({
         placeholder={placeholder}
         rows={3}
         aria-label="Ask the movie assistant"
-        className="min-h-24 w-full resize-none bg-transparent px-3 py-2 text-base leading-7 text-slate-100 outline-none placeholder:text-slate-500"
+        className="min-h-24 w-full resize-none bg-transparent px-3 py-2 text-base leading-7 text-white outline-none placeholder:text-[#647493]"
       />
       <div className="flex items-center justify-between gap-3 px-1">
-        <span className="text-xs text-slate-500">Enter to send · Shift + Enter for a new line</span>
+        <span className="text-xs text-[#647493]">Enter to send · Shift + Enter for a new line</span>
         <button
           type="submit"
           disabled={isLoading || !query.trim()}
-          className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-cyan-300 px-5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-6 text-sm font-bold text-white shadow-[0_10px_26px_rgba(47,107,255,0.3)] transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-[#1a2946] disabled:text-[#647493] disabled:shadow-none"
         >
           {isLoading ? "Thinking..." : "Ask"}
         </button>

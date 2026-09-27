@@ -78,10 +78,13 @@ export async function signupUser(payload: SignupPayload) {
     },
     body: JSON.stringify(payload)
   });
-  const data = (await readResponse(response)) as any;
+  const data = (await readResponse(response)) as User | { message?: string } | null;
 
   if (!response.ok) {
-    const message = data && data.message ? data.message : "Unable to create account right now.";
+    const message =
+      data && "message" in data && typeof data.message === "string"
+        ? data.message
+        : "Unable to create account right now.";
     throw new Error(message);
   }
 

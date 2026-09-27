@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { InteractionPanel } from "@/components/InteractionPanel";
 import { RecommendationRail } from "@/components/RecommendationRail";
 import { SearchBar } from "@/components/SearchBar";
+import { BrandMark } from "@/components/BrandMark";
 import { getInteractions, getRecommendations, saveInteraction, searchMovies } from "@/lib/api";
 import { saveSearchResult } from "@/lib/search-session";
 import { clearUserSession, getUserSession } from "@/lib/session";
@@ -131,19 +132,20 @@ export default function FeedPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#050b14] text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,_rgba(34,211,238,0.12),_transparent_30%),radial-gradient(circle_at_85%_80%,_rgba(249,115,22,0.08),_transparent_26%)]" />
+    <main className="reel-page relative min-h-screen overflow-hidden text-white">
+      <div className="reel-grid pointer-events-none absolute inset-0" />
+      <div className="pointer-events-none absolute left-1/2 top-8 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full border-[64px] border-blue-500/[0.045]" />
 
-      <header className="relative z-10 flex items-center justify-between px-5 py-5 sm:px-8">
-        <Link href="/" className="text-sm font-semibold tracking-[0.18em] text-slate-200 uppercase">
-          Movie Recommender
+      <header className="relative z-10 flex items-center justify-between border-b border-white/[0.06] px-5 py-5 sm:px-8">
+        <Link href="/">
+          <BrandMark />
         </Link>
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-slate-500 sm:inline">{user.userName}</span>
           <button
             type="button"
             onClick={handleSignOut}
-            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+            className="rounded-full border border-blue-300/20 bg-blue-500/[0.08] px-4 py-2 text-sm text-[#b8c4da] transition hover:border-red-400/40 hover:bg-red-500/10 hover:text-white"
           >
             Sign out
           </button>
@@ -153,11 +155,11 @@ export default function FeedPage() {
       <section className="relative z-10 mx-auto min-h-[calc(100vh-84px)] w-full max-w-7xl px-4 pt-[9vh] pb-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
           <div className="mb-8 text-center">
-            <p className="mb-3 text-xs font-medium tracking-[0.28em] text-cyan-300 uppercase">Ask or discover</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-50 sm:text-5xl">
+            <p className="mb-3 text-xs font-bold tracking-[0.28em] text-red-400 uppercase">Ask or discover</p>
+            <h1 className="text-4xl font-bold tracking-[-0.025em] text-white sm:text-6xl">
               What would you like to explore?
             </h1>
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-400 sm:text-base">
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-[#91a0bd] sm:text-base">
               Search here for any movie recommendation, or choose from your personalized picks below.
             </p>
           </div>
@@ -171,7 +173,7 @@ export default function FeedPage() {
                   key={prompt}
                   type="button"
                   onClick={() => void handleSearch(prompt)}
-                  className="rounded-full border border-white/8 bg-white/[0.035] px-4 py-2 text-xs text-slate-400 transition hover:border-cyan-300/30 hover:text-slate-200"
+                  className="rounded-full border border-blue-300/15 bg-blue-500/[0.045] px-4 py-2 text-xs text-[#91a0bd] transition hover:border-red-400/35 hover:bg-red-500/[0.08] hover:text-white"
                 >
                   {prompt}
                 </button>
@@ -180,8 +182,8 @@ export default function FeedPage() {
           ) : null}
 
           {isSearching ? (
-            <div className="mt-7 flex items-center justify-center gap-3 text-sm text-slate-400" role="status">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
+            <div className="mt-7 flex items-center justify-center gap-3 text-sm text-[#91a0bd]" role="status">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,51,64,0.8)]" />
               Thinking through your request...
             </div>
           ) : null}
@@ -193,9 +195,9 @@ export default function FeedPage() {
           ) : null}
 
           {assistantAnswer ? (
-            <article className="mt-8 rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
-              <p className="mb-3 text-xs font-medium tracking-[0.22em] text-cyan-300 uppercase">Response</p>
-              <p className="whitespace-pre-wrap text-base leading-7 text-slate-200">{assistantAnswer.response}</p>
+            <article className="mt-8 rounded-2xl border border-blue-300/15 bg-[#0a1833]/90 p-6 shadow-[0_22px_70px_rgba(0,0,0,0.28)]">
+              <p className="mb-3 text-xs font-bold tracking-[0.22em] text-blue-400 uppercase">ReelFinder response</p>
+              <p className="whitespace-pre-wrap text-base leading-7 text-[#d9e1f0]">{assistantAnswer.response}</p>
             </article>
           ) : null}
         </div>
@@ -203,8 +205,8 @@ export default function FeedPage() {
         <section className="mt-14">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
-              <p className="mb-2 text-xs font-medium tracking-[0.24em] text-orange-300 uppercase">Selected for you</p>
-              <h2 className="text-2xl font-semibold tracking-tight">Based on your preferences</h2>
+              <p className="mb-2 text-xs font-bold tracking-[0.24em] text-red-400 uppercase">Selected for you</p>
+              <h2 className="text-3xl font-bold tracking-tight">Based on your preferences</h2>
             </div>
             {!isLoadingRecommendations && recommendations.length > 0 ? (
               <span className="hidden text-xs text-slate-500 sm:block">Scroll to explore</span>
@@ -220,7 +222,7 @@ export default function FeedPage() {
           ) : recommendations.length > 0 ? (
             <RecommendationRail movies={recommendations} interactions={interactions} onSelect={handleMovieOpen} />
           ) : (
-            <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.025] px-6 py-10 text-center text-sm text-slate-400">
+            <div className="rounded-3xl border border-dashed border-blue-300/20 bg-blue-500/[0.03] px-6 py-10 text-center text-sm text-[#91a0bd]">
               No personalized suggestions yet. Update your preferences or interact with a few movies first.
             </div>
           )}
@@ -253,7 +255,7 @@ function RecommendationRailSkeleton() {
       {Array.from({ length: 6 }).map((_, index) => (
         <div
           key={index}
-          className="aspect-[2/3] w-[178px] shrink-0 animate-pulse rounded-3xl border border-white/8 bg-white/5 sm:w-[205px]"
+          className="aspect-[2/3] w-[178px] shrink-0 animate-pulse rounded-3xl border border-blue-300/10 bg-blue-500/[0.06] sm:w-[205px]"
         />
       ))}
     </div>

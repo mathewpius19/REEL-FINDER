@@ -25,10 +25,10 @@ export function GenrePicker({ selectedGenres, onChange }: GenrePickerProps) {
             key={genre}
             type="button"
             onClick={() => toggleGenre(genre)}
-            className={`rounded-2xl border px-4 py-3 text-left text-sm transition ${
+            className={`rounded-xl border px-4 py-3 text-left text-sm transition ${
               selected
-                ? "border-cyan-300 bg-cyan-300/12 text-cyan-100"
-                : "border-white/10 bg-slate-950/50 text-slate-300 hover:bg-slate-950"
+                ? "border-red-400 bg-red-500/15 text-red-100 shadow-[0_8px_24px_rgba(239,51,64,0.08)]"
+                : "border-blue-300/15 bg-blue-500/[0.045] text-[#a9b6cf] hover:border-blue-400/35 hover:bg-blue-500/10"
             }`}
           >
             {genre}

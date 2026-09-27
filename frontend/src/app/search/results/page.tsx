@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { BrandMark } from "@/components/BrandMark";
 import { InteractionPanel } from "@/components/InteractionPanel";
 import { MovieGrid } from "@/components/MovieGrid";
 import { getInteractions, getRecommendations, saveInteraction } from "@/lib/api";
@@ -105,16 +106,24 @@ export default function SearchResultsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_24%),linear-gradient(180deg,_#050b14,_#0f172a_52%,_#111827)] text-white">
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <header className="mb-10 flex flex-col gap-6 border-b border-white/8 pb-8 sm:flex-row sm:items-end sm:justify-between">
+    <main className="reel-page relative min-h-screen overflow-hidden text-white">
+      <div className="reel-grid pointer-events-none absolute inset-0" />
+      <section className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <nav className="mb-12 flex items-center justify-between">
+          <Link href="/">
+            <BrandMark />
+          </Link>
+          <span className="hidden text-xs uppercase tracking-[0.2em] text-[#647493] sm:block">Search results</span>
+        </nav>
+
+        <header className="mb-10 flex flex-col gap-6 border-b border-blue-300/10 pb-8 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
-            <p className="mb-3 text-xs font-medium tracking-[0.25em] text-cyan-300 uppercase">Movie results</p>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{result.query}</h1>
+            <p className="mb-3 text-xs font-bold tracking-[0.25em] text-red-400 uppercase">Movie results</p>
+            <h1 className="text-4xl font-bold tracking-[-0.02em] sm:text-5xl">{result.query}</h1>
           </div>
           <Link
             href="/feed"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 text-sm font-medium text-slate-200 transition hover:bg-white/10"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-bold text-white shadow-[0_10px_28px_rgba(47,107,255,0.25)] transition hover:bg-blue-500"
           >
             New search
           </Link>
@@ -129,16 +138,16 @@ export default function SearchResultsPage() {
         {result.movies.length > 0 ? (
           <MovieGrid movies={result.movies} interactions={interactions} onSelect={handleMovieOpen} />
         ) : (
-          <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.025] px-6 py-16 text-center text-sm text-slate-400">
+          <div className="rounded-3xl border border-dashed border-blue-300/20 bg-blue-500/[0.03] px-6 py-16 text-center text-sm text-[#91a0bd]">
             No matching movies were returned. Try a broader description.
           </div>
         )}
 
-        <section className="mt-16 border-t border-white/8 pt-10">
+        <section className="mt-16 border-t border-blue-300/10 pt-10">
           <div className="mb-6">
-            <p className="mb-2 text-xs font-medium tracking-[0.25em] text-orange-300 uppercase">For you</p>
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Recommended from your taste</h2>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mb-2 text-xs font-bold tracking-[0.25em] text-red-400 uppercase">For you</p>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Recommended from your taste</h2>
+            <p className="mt-2 text-sm text-[#91a0bd]">
               Based on your genre preferences and previous movie interactions.
             </p>
           </div>
@@ -154,7 +163,7 @@ export default function SearchResultsPage() {
           ) : recommendations.length > 0 ? (
             <MovieGrid movies={recommendations} interactions={interactions} onSelect={handleMovieOpen} />
           ) : (
-            <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.025] px-6 py-12 text-center text-sm text-slate-400">
+            <div className="rounded-3xl border border-dashed border-blue-300/20 bg-blue-500/[0.03] px-6 py-12 text-center text-sm text-[#91a0bd]">
               No personalized recommendations are available yet. Interact with a few movies and try again.
             </div>
           )}
@@ -187,7 +196,7 @@ function RecommendationSkeleton() {
       {Array.from({ length: 6 }).map((_, index) => (
         <div
           key={index}
-          className="aspect-[2/3] animate-pulse rounded-3xl border border-white/8 bg-white/5"
+          className="aspect-[2/3] animate-pulse rounded-2xl border border-blue-300/10 bg-blue-500/[0.06]"
         />
       ))}
     </div>
