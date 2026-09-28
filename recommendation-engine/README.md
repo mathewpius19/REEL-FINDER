@@ -54,7 +54,7 @@ The recommendation engine runs as a Python microservice and integrates with the 
 
 -  Retrieves recommendations via vector similarity
 ---
-## ⚖️ 3. Hybrid Ranking
+## ⚖️ 3. Retrieval & Filtering
 
 - Semantic similarity (embedding-based)
 - Content-type filtering (movies vs documentaries)
