@@ -2,13 +2,24 @@
 
 ## 📌 Overview
 
-This ML service powers a **movie recommendation system** using:
+This recommendation engine powers the ML and agentic capabilities of **ReelFinder**, a full-stack movie discovery and personalized recommendation platform.
 
-- Semantic search (text embeddings)
-- Personalized recommendations (user embeddings)
-- Vector similarity search (FAISS)
+The service combines:
 
-It is designed as a **scalable microservice** that integrates with a backend (Spring Boot) and can be extended to **multimodal systems (images, jobs, etc.)**.
+- Semantic search using Sentence Transformer embeddings
+- FAISS-based vector similarity search
+- Personalized recommendations using user interaction embeddings
+- An Ollama-powered LLM agent for natural-language movie discovery
+- FastMCP for exposing semantic retrieval as an MCP tool
+- Structured agent responses for integration with the Spring Boot backend
+
+The system supports two recommendation paths:
+
+1. **Semantic Discovery** — users describe what they want to watch in natural language. An LLM agent determines whether semantic retrieval is required, constructs a retrieval-oriented query, invokes the MCP search tool, and formats the retrieved results.
+
+2. **Personalized Recommendations** — user ratings, clicks, watch history, interaction recency, and genre preferences are combined into a personalized user vector and compared against movie embeddings.
+
+The recommendation engine runs as a Python microservice and integrates with the ReelFinder Spring Boot backend.
 
 ---
 
@@ -16,10 +27,17 @@ It is designed as a **scalable microservice** that integrates with a backend (Sp
 
 ## 🔍 1. Semantic Search
 
-- Converts user query → embedding
-- Retrieves top-K similar movies using FAISS
-- Supports natural language queries like: “movies like interstellar”, “horror movies like conjuring”
+- Uses an Ollama-powered agent to interpret natural-language movie queries
 
+- Agent decides when semantic retrieval is required and invokes the search capability through a FastMCP server
+
+- Converts the agent's semantic query → Sentence Transformer embedding
+
+- Retrieves top-K similar movies using FAISS
+
+- Returns retrieved movie metadata to the agent for a grounded response
+
+- Supports queries like: “movies like Interstellar”, “horror movies like The Conjuring”
 
 ---
 
@@ -35,9 +53,7 @@ It is designed as a **scalable microservice** that integrates with a backend (Sp
 - Combines:Interaction Vector + Preference Vector → User Embedding
 
 -  Retrieves recommendations via vector similarity
-
 ---
-
 ## ⚖️ 3. Hybrid Ranking
 
 - Semantic similarity (embedding-based)
@@ -47,14 +63,31 @@ It is designed as a **scalable microservice** that integrates with a backend (Sp
 ---
 
 # 🏗️ Architecture
+
 Client (Spring Boot)
+
 ↓
+
 Flask ML Service
+
 ↓
+
+Ollama Agent
+
+↓
+
+FastMCP Semantic Search Tool
+
+↓
+
 Embeddings Model (Sentence Transformers)
+
 ↓
+
 FAISS Index (Vector Search)
+
 ↓
+
 Movie Metadata (Pandas / CSV)
 
 ---
@@ -84,7 +117,13 @@ POST /recommend/search
 ### Response:
 ```json
 {
-   "movieIds": [123, 456, 789]
+
+  "type": "movie_recommendation",
+
+  "movieIds": [123, 456, 789],
+
+  "response": "Here are some movies that match your request."
+
 }
 ```
 👤 User Recommendations
@@ -156,4 +195,6 @@ Preference = Σ (genre_weight × genre_centroid)
 	•	Keep ML logic separate from backend
 	•	Preserve ranking across services
 	•	Use hybrid retrieval (semantic + rules)
+	•	Keep the LLM provider replaceable without changing the MCP retrieval interface
+	•	Expose high-level capabilities through MCP instead of low-level ML functions
 
