@@ -1,4 +1,4 @@
-# 🎬 Movie Recommendation Backend (Spring Boot)
+# 🎬 Movie Recommendation Webserver
 
 ## 📌 Overview
 
@@ -54,8 +54,6 @@ Sentence Transformers + FAISS
 
 ### 🔍 Search Movies
 
-### 🔍 Search Movies
-
 POST /recommender/movies/search
 
 Request:
@@ -69,8 +67,7 @@ Request:
 }
 
 Response:
-{
-    [
+[
 
   {
 
@@ -97,7 +94,6 @@ Response:
   }
 
 ]
-  }
 
 ```
 ---
